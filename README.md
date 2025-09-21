@@ -10,7 +10,7 @@ Este projeto tem como objetivo integrar com o **app do investidor**, permitindo 
 
 
 ## 🚀 Como rodar
-
+- Arquivo JSON_TESTE_CALENDAR_API.JSON com requisições ja feitas para teste.
 1. Restaurar pacotes:
    ```bash
    dotnet restore
