@@ -1,62 +1,405 @@
 {
   "info": {
-    "name": "Calendar API",
+    "name": "Calendar API - Sprint 4",
     "_postman_id": "12345678-abcd-ef00-1234-56789abcdef0",
-    "description": "Coleção de testes da API de calendário",
+    "description": "Coleção completa de testes da API de calendário - Sprint 4 com CRUD completo, pesquisas LINQ e relatórios analíticos",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "teste@exemplo.com",
+      "type": "string"
+    }
+  ],
   "item": [
     {
-      "name": "Criar Evento",
-      "request": {
-        "method": "POST",
-        "header": [
-          {"key": "Content-Type", "value": "application/json"}
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Reunião com cliente\",\n  \"date\": \"2025-09-25\",\n  \"time\": \"14:30:00\",\n  \"client\": \"João da Silva\",\n  \"type\": \"Reunião\",\n  \"reminderMinutes\": 30,\n  \"notes\": \"Discutir contrato anual\",\n  \"email\": \"cliente@exemplo.com\"\n}"        },
-        "url": {"raw": "http://localhost:5000/api/events", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api","events"]}
-      }
+      "name": "CRUD Básico",
+      "item": [
+        {
+          "name": "1. Criar Evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reunião com Cliente ABC\",\n  \"date\": \"2024-01-15T00:00:00\",\n  \"time\": \"14:30:00\",\n  \"client\": \"Empresa ABC Ltda\",\n  \"type\": \"Reunião\",\n  \"reminderMinutes\": 15,\n  \"notes\": \"Discussão sobre novo projeto\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "2. Listar Eventos por Email",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events?email={{testEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Obter Evento por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "1"]
+            }
+          }
+        },
+        {
+          "name": "4. Atualizar Evento",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reunião Atualizada\",\n  \"date\": \"2024-01-16T00:00:00\",\n  \"time\": \"15:00:00\",\n  \"client\": \"Empresa ABC Ltda\",\n  \"type\": \"Reunião\",\n  \"reminderMinutes\": 30,\n  \"notes\": \"Reunião atualizada com novo horário\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "1"]
+            }
+          }
+        },
+        {
+          "name": "5. Deletar Evento",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/events/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "1"]
+            }
+          }
+        }
+      ]
     },
     {
-      "name": "Listar Eventos",
-      "request": {
-        "method": "GET",
-        "url": {"raw": "http://localhost:5000/api/events?email=cliente@exemplo.com", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api","events"], "query": [{"key":"email","value":"cliente@exemplo.com"}]}
-      }
+      "name": "Pesquisas Avançadas",
+      "item": [
+        {
+          "name": "1. Pesquisa com Filtros e Paginação",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"startDate\": \"2024-01-01T00:00:00\",\n  \"endDate\": \"2024-12-31T23:59:59\",\n  \"type\": \"Reunião\",\n  \"searchTerm\": \"cliente\",\n  \"page\": 1,\n  \"pageSize\": 10,\n  \"sortBy\": \"Date\",\n  \"sortDirection\": \"asc\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "search"]
+            }
+          }
+        },
+        {
+          "name": "2. Eventos Próximos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/upcoming?email={{testEmail}}&days=7",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "upcoming"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"},
+                {"key": "days", "value": "7"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Eventos por Tipo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/by-type?email={{testEmail}}&type=Reunião",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "by-type"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"},
+                {"key": "type", "value": "Reunião"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Eventos por Cliente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/by-client?email={{testEmail}}&client=Empresa ABC",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "by-client"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"},
+                {"key": "client", "value": "Empresa ABC"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Estatísticas dos Eventos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/statistics?email={{testEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "statistics"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"}
+              ]
+            }
+          }
+        }
+      ]
     },
     {
-      "name": "Atualizar Evento",
-      "request": {
-        "method": "PUT",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "body": {"mode":"raw","raw": "{\n  \"title\": \"Reunião Atualizada\",\n  \"date\": \"2025-09-26\",\n  \"time\": \"15:00:00\",\n  \"client\": \"João da Silva\",\n  \"type\": \"Reunião\",\n  \"reminderMinutes\": 30,\n  \"notes\": \"Alteração de horário\",\n  \"email\": \"cliente@exemplo.com\"\n}"},
-        "url": {"raw": "http://localhost:5000/api/events/1", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api","events","1"]}
-      }
+      "name": "Relatórios Analíticos",
+      "item": [
+        {
+          "name": "1. Relatório por Período",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/events-by-period?email={{testEmail}}&startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "events-by-period"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"},
+                {"key": "startDate", "value": "2024-01-01T00:00:00"},
+                {"key": "endDate", "value": "2024-12-31T23:59:59"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Produtividade por Cliente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/client-productivity?email={{testEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "client-productivity"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Tendências Temporais",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/temporal-trends?email={{testEmail}}&months=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "temporal-trends"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"},
+                {"key": "months", "value": "12"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Conflitos de Horário",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/time-conflicts?email={{testEmail}}&date=2024-01-15T00:00:00",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "time-conflicts"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"},
+                {"key": "date", "value": "2024-01-15T00:00:00"}
+              ]
+            }
+          }
+        }
+      ]
     },
     {
-      "name": "Excluir Evento",
-      "request": {
-        "method": "DELETE",
-        "url": {"raw": "http://localhost:5000/api/events/1", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api","events","1"]}
-      }
+      "name": "Import/Export",
+      "item": [
+        {
+          "name": "1. Exportar Eventos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/export?email={{testEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "export"],
+              "query": [
+                {"key": "email", "value": "{{testEmail}}"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Importar Eventos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    {\n      \"Titulo\": \"Evento Importado 1\",\n      \"Data\": \"2024-01-20\",\n      \"Hora\": \"10:00:00\",\n      \"Cliente\": \"Cliente Importado\",\n      \"Tipo\": \"Reunião\",\n      \"Lembrete\": \"30\",\n      \"Notas\": \"Evento importado via API\",\n      \"email\": \"{{testEmail}}\"\n    },\n    {\n      \"Titulo\": \"Evento Importado 2\",\n      \"Data\": \"2024-01-21\",\n      \"Hora\": \"14:00:00\",\n      \"Cliente\": \"Outro Cliente\",\n      \"Tipo\": \"Call\",\n      \"Lembrete\": \"15\",\n      \"Notas\": \"Segundo evento importado\",\n      \"email\": \"{{testEmail}}\"\n    },\n    {\n      \"Titulo\": \"Treinamento de Equipe\",\n      \"Data\": \"2024-01-22\",\n      \"Hora\": \"09:00:00\",\n      \"Cliente\": \"Empresa XYZ\",\n      \"Tipo\": \"Treinamento\",\n      \"Lembrete\": \"60\",\n      \"Notas\": \"Treinamento sobre novas tecnologias\",\n      \"email\": \"{{testEmail}}\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "import"]
+            }
+          }
+        }
+      ]
     },
     {
-      "name": "Exportar Eventos",
-      "request": {
-        "method": "GET",
-        "url": {"raw": "http://localhost:5000/api/events/export?email=cliente@exemplo.com", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api","events","export"], "query": [{"key":"email","value":"cliente@exemplo.com"}]}
-      }
+      "name": "Testes de Validação",
+      "item": [
+        {
+          "name": "1. Criar Evento - Dados Inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"date\": \"data-inválida\",\n  \"time\": \"hora-inválida\",\n  \"email\": \"email-inválido\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "2. Buscar Evento Inexistente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events/99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "99999"]
+            }
+          }
+        },
+        {
+          "name": "3. Listar Eventos - Email Obrigatório",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        }
+      ]
     },
     {
-      "name": "Importar Eventos",
-      "request": {
-        "method": "POST",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "body": {"mode":"raw","raw": "{\n  \"data\": [\n    {\n      \"Titulo\": \"Evento importado\",\n      \"Data\": \"2025-09-26\",\n      \"Hora\": \"10:00:00\",\n      \"Cliente\": \"Maria\",\n      \"Tipo\": \"Treinamento\",\n      \"Lembrete\": \"15\",\n      \"Notas\": \"Treinamento de equipe\",\n      \"email\": \"cliente@exemplo.com\"\n    }\n  ]\n}"},
-        "url": {"raw": "http://localhost:5000/api/events/import", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api","events","import"]}
-      }
+      "name": "Dados de Teste",
+      "item": [
+        {
+          "name": "1. Criar Múltiplos Eventos - Reuniões",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reunião Semanal\",\n  \"date\": \"2024-01-15T00:00:00\",\n  \"time\": \"09:00:00\",\n  \"client\": \"Equipe Interna\",\n  \"type\": \"Reunião\",\n  \"reminderMinutes\": 15,\n  \"notes\": \"Reunião de alinhamento semanal\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "2. Criar Evento - Call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Call com Fornecedor\",\n  \"date\": \"2024-01-16T00:00:00\",\n  \"time\": \"11:00:00\",\n  \"client\": \"Fornecedor ABC\",\n  \"type\": \"Call\",\n  \"reminderMinutes\": 10,\n  \"notes\": \"Negociação de preços\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "3. Criar Evento - Treinamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Treinamento de Segurança\",\n  \"date\": \"2024-01-17T00:00:00\",\n  \"time\": \"14:00:00\",\n  \"client\": \"RH\",\n  \"type\": \"Treinamento\",\n  \"reminderMinutes\": 30,\n  \"notes\": \"Treinamento obrigatório de segurança\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "4. Criar Evento - Apresentação",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Apresentação de Resultados\",\n  \"date\": \"2024-01-18T00:00:00\",\n  \"time\": \"16:00:00\",\n  \"client\": \"Diretoria\",\n  \"type\": \"Apresentação\",\n  \"reminderMinutes\": 60,\n  \"notes\": \"Apresentação dos resultados do trimestre\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        }
+      ]
     }
   ]
 }

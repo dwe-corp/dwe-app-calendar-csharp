@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using CalendarApi.Data;
 using CalendarApi.Models;
 using CalendarApi.Models.Dto;
+using CalendarApi.Services;
 using System.Text.Json;
 
 namespace CalendarApi.Controllers
@@ -11,99 +12,218 @@ namespace CalendarApi.Controllers
     [Route("api/[controller]")]
     public class EventsController : ControllerBase
     {
+        private readonly IEventService _eventService;
         private readonly CalendarDbContext _db;
-        public EventsController(CalendarDbContext db) => _db = db;
 
+        public EventsController(IEventService eventService, CalendarDbContext db)
+        {
+            _eventService = eventService;
+            _db = db;
+        }
+
+        /// <summary>
+        /// Lista eventos por email
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetByEmail([FromQuery] string email)
         {
-            if (string.IsNullOrEmpty(email)) return BadRequest(new { error = "email é obrigatório" });
+            if (string.IsNullOrEmpty(email)) 
+                return BadRequest(new { error = "email é obrigatório" });
 
-            var list = await _db.Events
-                .Where(e => e.Email == email)
-                .OrderBy(e => e.Date).ThenBy(e => e.Time)
-                .ToListAsync();
-
-            var formatted = new
+            try
             {
-                data = list.Select(e => new
-                {
-                    Titulo = e.Title,
-                    Data = e.Date.ToString("yyyy-MM-dd"),
-                    Hora = e.Time.ToString(),
-                    Cliente = e.Client,
-                    Tipo = e.Type,
-                    Lembrete = e.ReminderMinutes?.ToString() ?? string.Empty,
-                    Notas = e.Notes,
-                    email = e.Email
-                }).ToArray()
-            };
-
-            return Ok(formatted);
+                var events = await _eventService.GetByEmailAsync(email);
+                return Ok(new { data = events });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
         }
 
+        /// <summary>
+        /// Pesquisa avançada de eventos com filtros e paginação
+        /// </summary>
+        [HttpPost("search")]
+        public async Task<IActionResult> SearchEvents([FromBody] EventSearchDto searchDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _eventService.SearchEventsAsync(searchDto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém eventos próximos (próximos 7 dias por padrão)
+        /// </summary>
+        [HttpGet("upcoming")]
+        public async Task<IActionResult> GetUpcomingEvents([FromQuery] string email, [FromQuery] int days = 7)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { error = "email é obrigatório" });
+
+            try
+            {
+                var events = await _eventService.GetUpcomingEventsAsync(email, days);
+                return Ok(new { data = events });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém eventos por tipo
+        /// </summary>
+        [HttpGet("by-type")]
+        public async Task<IActionResult> GetEventsByType([FromQuery] string email, [FromQuery] string type)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { error = "email é obrigatório" });
+            if (string.IsNullOrEmpty(type))
+                return BadRequest(new { error = "tipo é obrigatório" });
+
+            try
+            {
+                var events = await _eventService.GetEventsByTypeAsync(email, type);
+                return Ok(new { data = events });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém eventos por cliente
+        /// </summary>
+        [HttpGet("by-client")]
+        public async Task<IActionResult> GetEventsByClient([FromQuery] string email, [FromQuery] string client)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { error = "email é obrigatório" });
+            if (string.IsNullOrEmpty(client))
+                return BadRequest(new { error = "cliente é obrigatório" });
+
+            try
+            {
+                var events = await _eventService.GetEventsByClientAsync(email, client);
+                return Ok(new { data = events });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém estatísticas dos eventos
+        /// </summary>
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetEventStatistics([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { error = "email é obrigatório" });
+
+            try
+            {
+                var statistics = await _eventService.GetEventStatisticsAsync(email);
+                return Ok(new { data = statistics });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém evento por ID
+        /// </summary>
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var item = await _db.Events.FindAsync(id);
-            if (item == null) return NotFound();
-            return Ok(item);
+            try
+            {
+                var eventItem = await _eventService.GetByIdAsync(id);
+                if (eventItem == null) return NotFound(new { error = "Evento não encontrado" });
+                return Ok(eventItem);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
         }
 
+        /// <summary>
+        /// Cria novo evento
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] EventCreateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
-            var item = new EventItem
+            try
             {
-                Title = dto.Title,
-                Date = dto.Date.Date,
-                Time = dto.Time,
-                Client = dto.Client,
-                Type = dto.Type,
-                ReminderMinutes = dto.ReminderMinutes,
-                Notes = dto.Notes,
-                Email = dto.Email,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _db.Events.Add(item);
-            await _db.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
+                var eventItem = await _eventService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = eventItem.Id }, eventItem);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
         }
 
+        /// <summary>
+        /// Atualiza evento existente
+        /// </summary>
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] EventCreateDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] EventUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var item = await _db.Events.FindAsync(id);
-            if (item == null) return NotFound();
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
-            item.Title = dto.Title;
-            item.Date = dto.Date.Date;
-            item.Time = dto.Time;
-            item.Client = dto.Client;
-            item.Type = dto.Type;
-            item.ReminderMinutes = dto.ReminderMinutes;
-            item.Notes = dto.Notes;
-            item.Email = dto.Email;
-            item.UpdatedAt = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                var eventItem = await _eventService.UpdateAsync(id, dto);
+                if (eventItem == null) 
+                    return NotFound(new { error = "Evento não encontrado" });
+                
+                return Ok(eventItem);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
         }
 
+        /// <summary>
+        /// Remove evento
+        /// </summary>
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = await _db.Events.FindAsync(id);
-            if (item == null) return NotFound();
-            _db.Events.Remove(item);
-            await _db.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                var deleted = await _eventService.DeleteAsync(id);
+                if (!deleted) 
+                    return NotFound(new { error = "Evento não encontrado" });
+                
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Erro interno do servidor", details = ex.Message });
+            }
         }
 
         [HttpGet("export")]
